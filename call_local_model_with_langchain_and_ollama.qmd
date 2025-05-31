@@ -1,0 +1,69 @@
+---
+title: "Basics of Langchain and Ollama - Call a local chat model using LangChain"
+author: "Shefali Lathwal"
+date: "2025-05-30"
+date-modified: last-modified
+editor: visual
+toc: true
+format: html
+jupyter: python_langchain
+---
+
+# Connect to an Ollama Model
+
+Use ollama chat interface with Langchain
+
+```{python}
+from langchain_ollama import ChatOllama
+
+# Define a model to use. The model needs to be present locally. The parameter, temperature, sets the creativity of the model, with 0 being least creative and 1 being the most creative.
+gemma3 = ChatOllama(model = "gemma3:4b", temperature = 0) 
+```
+
+# Send a message to a model and get a response
+
+Chat models take messages as input. Messages have a:
+
+-   role (that describes who is saying the message)
+-   a content property
+
+We use two main methods to interact with Chat Models
+
+-   stream - returns partial responses as they are generated. it's best used in chat interfaces where it's useful for users to see answer as it is being generated.
+-   invoke - returns the entire response after the model finishes generating. Invoke will be used in agentic workflows where we will use the entire response before proceeding to the next step.
+
+## use invoke method
+```{python}
+from langchain_core.messages import HumanMessage
+
+# Create a Message
+msg = HumanMessage(content = "Tell me about Canada in 2 sentences.", name = "Shefali")
+
+# Make a message list
+messages = [msg]
+
+# Invoke the model with a list of messages
+# Make sure ollama is running on your system
+gemma3.invoke(messages)
+```
+
+We get an `AIMessage` back.
+
+We can directly pass a string to the model instead of message list.
+
+```{python}
+response = gemma3.invoke("Tell me about Canada in 2 sentences.")
+print(response.content)
+```
+
+
+## Use stream method
+- Response is printed as it is being generated.
+
+```{python}
+for chunk in gemma3.stream("Tell me about Canada in 4 sentences."):
+    print(chunk.content, end="")
+```
+
+
+
