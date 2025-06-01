@@ -1,7 +1,7 @@
 ---
 title: "Basics of Ollama - Use Ollama API"
 author: "Shefali Lathwal"
-date: "2025-05-30"
+date: "2025-06-01"
 date-modified: last-modified
 editor: visual
 toc: true
@@ -11,7 +11,7 @@ jupyter: python_langchain
 
 # Interact directly with local Ollama API
 
-Before performing this step, make sure that Ollama is installed and running on your local machine. \## Define the url, data to be sent and get back the response
+Before performing this step, make sure that Ollama is installed and running on your local machine.
 
 # Get the full response from the model in a single Json object
 
