@@ -84,10 +84,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#connect-to-an-ollama-model" id="toc-connect-to-an-ollama-model" class="nav-link active" data-scroll-target="#connect-to-an-ollama-model">Connect to an Ollama Model</a></li>
   <li><a href="#send-a-message-to-a-model-and-get-a-response" id="toc-send-a-message-to-a-model-and-get-a-response" class="nav-link" data-scroll-target="#send-a-message-to-a-model-and-get-a-response">Send a message to a model and get a response</a>
   <ul class="collapse">
-  <li><a href="#use-invoke-method" id="toc-use-invoke-method" class="nav-link" data-scroll-target="#use-invoke-method">use invoke method</a></li>
-  <li><a href="#use-stream-method" id="toc-use-stream-method" class="nav-link" data-scroll-target="#use-stream-method">Use stream method</a></li>
+  <li><a href="#directly-pass-a-prompt-to-the-model" id="toc-directly-pass-a-prompt-to-the-model" class="nav-link" data-scroll-target="#directly-pass-a-prompt-to-the-model">Directly pass a prompt to the model</a></li>
+  <li><a href="#use-a-message-list-with-a-dictionary-containing-a-role-and-content-fields" id="toc-use-a-message-list-with-a-dictionary-containing-a-role-and-content-fields" class="nav-link" data-scroll-target="#use-a-message-list-with-a-dictionary-containing-a-role-and-content-fields">Use a message list with a dictionary containing a role and content fields</a></li>
+  <li><a href="#re-use-a-prompt-by-defining-a-template" id="toc-re-use-a-prompt-by-defining-a-template" class="nav-link" data-scroll-target="#re-use-a-prompt-by-defining-a-template">Re-use a prompt by defining a template</a></li>
+  <li><a href="#use-the-built-in-messages-classes-in-langchain" id="toc-use-the-built-in-messages-classes-in-langchain" class="nav-link" data-scroll-target="#use-the-built-in-messages-classes-in-langchain">Use the built-in messages classes in LangChain</a></li>
+  <li><a href="#use-stream-method-to-call-the-model" id="toc-use-stream-method-to-call-the-model" class="nav-link" data-scroll-target="#use-stream-method-to-call-the-model">Use stream method to call the model</a></li>
   </ul></li>
-  <li><a href="#different-types-of-messages" id="toc-different-types-of-messages" class="nav-link" data-scroll-target="#different-types-of-messages">Different types of messages</a></li>
   </ul>
 </nav>
 </div>
@@ -133,70 +135,142 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="connect-to-an-ollama-model" class="level1">
 <h1>Connect to an Ollama Model</h1>
 <p>Use ollama chat interface with Langchain</p>
-<div id="baf918c8" class="cell" data-execution_count="1">
+<p>ChatOllama is langchain’s abstraction to the ollama API endpoint.</p>
+<div id="8766a1fa" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langchain_ollama <span class="im">import</span> ChatOllama</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a model to use. The model needs to be present locally. The parameter, temperature, sets the creativity of the model, with 0 being least creative and 1 being the most creative.</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>gemma3 <span class="op">=</span> ChatOllama(model <span class="op">=</span> <span class="st">"gemma3:4b"</span>, temperature <span class="op">=</span> <span class="dv">0</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>gemma3 <span class="op">=</span> ChatOllama(model <span class="op">=</span> <span class="st">"gemma3:4b"</span>, temperature <span class="op">=</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="send-a-message-to-a-model-and-get-a-response" class="level1">
 <h1>Send a message to a model and get a response</h1>
-<p>Chat models take messages as input. Messages have a:</p>
-<ul>
-<li>role (that describes who is saying the message)</li>
-<li>a content property</li>
-</ul>
 <p>We use two main methods to interact with Chat Models</p>
 <ul>
 <li>stream - returns partial responses as they are generated. it’s best used in chat interfaces where it’s useful for users to see answer as it is being generated.</li>
 <li>invoke - returns the entire response after the model finishes generating. Invoke will be used in agentic workflows where we will use the entire response before proceeding to the next step.</li>
 </ul>
-<section id="use-invoke-method" class="level2">
-<h2 class="anchored" data-anchor-id="use-invoke-method">use invoke method</h2>
-<div id="feae5a83" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langchain_core.messages <span class="im">import</span> HumanMessage</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a Message</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>msg <span class="op">=</span> HumanMessage(content <span class="op">=</span> <span class="st">"Tell me about Canada in 2 sentences."</span>, name <span class="op">=</span> <span class="st">"Shefali"</span>)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Make a message list</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>messages <span class="op">=</span> [msg]</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Invoke the model with a list of messages</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure ollama is running on your system</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>gemma3.invoke(messages)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="2">
-<pre><code>AIMessage(content='Canada is a vast and diverse country located in North America, known for its stunning natural landscapes like the Rocky Mountains and the Canadian Shield. It’s a multicultural nation with a strong economy, a welcoming society, and a reputation for peacekeeping and diplomacy.', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-01T16:45:28.051779Z', 'done': True, 'done_reason': 'stop', 'total_duration': 7109729209, 'load_duration': 69840834, 'prompt_eval_count': 18, 'prompt_eval_duration': 1183186583, 'eval_count': 51, 'eval_duration': 5853802375, 'model_name': 'gemma3:4b'}, id='run-144aeca5-075d-498e-8cdb-340a5d7a26b5-0', usage_metadata={'input_tokens': 18, 'output_tokens': 51, 'total_tokens': 69})</code></pre>
+<p>For the rest of the section, we will focus on the invoke method.</p>
+<p>Now to get a response back from a model, we first need to pass a text, called prompt, to the model.</p>
+<p>We can do the following: - Pass a string directly - pass a list of messages containing dictionaries - pass messages using the class ChatPromptTemplate - pass a list of messages containing different messsages objects</p>
+<section id="directly-pass-a-prompt-to-the-model" class="level2">
+<h2 class="anchored" data-anchor-id="directly-pass-a-prompt-to-the-model">Directly pass a prompt to the model</h2>
+<div id="1555fc7e" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>prompt <span class="op">=</span> <span class="st">"Tell me something about Canada in two sentences."</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> gemma3.invoke(prompt)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>Markdown(response.content)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="10">
+<p>Canada is a vast and diverse country, known for its stunning natural landscapes like the Rocky Mountains and the Canadian Rockies. It’s also one of the world’s leading exporters of natural resources and boasts a multicultural society with a strong emphasis on peacekeeping and diplomacy.</p>
+</div>
+</div>
+</section>
+<section id="use-a-message-list-with-a-dictionary-containing-a-role-and-content-fields" class="level2">
+<h2 class="anchored" data-anchor-id="use-a-message-list-with-a-dictionary-containing-a-role-and-content-fields">Use a message list with a dictionary containing a role and content fields</h2>
+<p>Chat models take this prompt as a message. Messages have a:</p>
+<ul>
+<li>role (that describes who is saying the message)</li>
+<li>a content property</li>
+</ul>
+<p>Just like we saw in the ollama python package, we can get a response back by defining a message as shown.</p>
+<div id="689b1a60" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>prompt <span class="op">=</span> <span class="st">"Tell me something about Canada in two sentences."</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>messages <span class="op">=</span> [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: prompt}]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> gemma3.invoke(<span class="bu">input</span> <span class="op">=</span> messages)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>response</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<pre><code>AIMessage(content='Canada is a vast and diverse country, known for its stunning natural landscapes like the Rocky Mountains and the Canadian Rockies. It’s also one of the world’s leading exporters of natural resources and boasts a multicultural society with a strong emphasis on peacekeeping and diplomacy.', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-01T18:53:50.996674Z', 'done': True, 'done_reason': 'stop', 'total_duration': 6428414708, 'load_duration': 105831375, 'prompt_eval_count': 18, 'prompt_eval_duration': 80955750, 'eval_count': 53, 'eval_duration': 6240524833, 'model_name': 'gemma3:4b'}, id='run-c309a101-2dda-4eb0-8fd8-3d37981f8bb0-0', usage_metadata={'input_tokens': 18, 'output_tokens': 53, 'total_tokens': 71})</code></pre>
+</div>
+</div>
+<p>If we look at the output above, we see that the model returns an object called <code>AIMessage</code>, with the actual message present in the <code>response.content</code> field.</p>
+</section>
+<section id="re-use-a-prompt-by-defining-a-template" class="level2">
+<h2 class="anchored" data-anchor-id="re-use-a-prompt-by-defining-a-template">Re-use a prompt by defining a template</h2>
+<p>We can define a user prompt that takes variables as input and keep re-using the prompt. We need this capability because of the following reasons: 1. As we build more complex workflows, prompts can get long and detailed and we do not want to type them repeatedly. Thereofre, we can create templates and re-use them with minor changes. 2. LangChain provides prompts for some common tasks such as Q&amp;A, summarization, connecting SQL databases, connecting to APIs, so we can use built-in prompt templates from langchain. 3. LangChain support output parsing. You can ask outputs to be in specific formats with tags such as “Thought”, “Action”, “Observation” and prompt templates are a useful abstraction that allow us to extract these keywords.</p>
+<ul>
+<li>We define a special object called ChatPromptTemplate</li>
+</ul>
+<div id="91fdcc33" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langchain.prompts <span class="im">import</span> ChatPromptTemplate</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Do not use the f-string in the prompt since the variables will be defined later.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>template_string <span class="op">=</span> <span class="st">"Tell me about </span><span class="sc">{country}</span><span class="st"> in </span><span class="sc">{num}</span><span class="st"> sentences."</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>prompt_template <span class="op">=</span> ChatPromptTemplate.from_template(template_string)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>prompt_template</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<pre><code>ChatPromptTemplate(input_variables=['country', 'num'], input_types={}, partial_variables={}, messages=[HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=['country', 'num'], input_types={}, partial_variables={}, template='Tell me about {country} in {num} sentences.'), additional_kwargs={})])</code></pre>
+</div>
+</div>
+<p>Extract the actual prompt from the template as follows:</p>
+<div id="5218f9ac" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>prompt_template.messages[<span class="dv">0</span>].prompt, prompt_template.messages[<span class="dv">0</span>].prompt.input_variables </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<pre><code>(PromptTemplate(input_variables=['country', 'num'], input_types={}, partial_variables={}, template='Tell me about {country} in {num} sentences.'),
+ ['country', 'num'])</code></pre>
+</div>
+</div>
+<p>We can see that the prompt has two input variales.</p>
+<p>Create a message from the template using some variable values and pass it to a model</p>
+<div id="57c22f5f" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>country <span class="op">=</span> <span class="st">"France"</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>num_sentences <span class="op">=</span> <span class="st">"two"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># This code inserts the variables into the ChatPromptTemplate object</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>message <span class="op">=</span> prompt_template.format_messages(</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    country <span class="op">=</span> country,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    num <span class="op">=</span> num_sentences</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"User message:"</span>, message)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> gemma3.invoke(<span class="bu">input</span> <span class="op">=</span> message)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Model response:"</span>, response)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>Markdown(response.content)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>User message: [HumanMessage(content='Tell me about France in two sentences.', additional_kwargs={}, response_metadata={})]
+Model response: content='France is a country renowned for its rich history, vibrant culture, and iconic landmarks like the Eiffel Tower and Louvre Museum.  It’s a major global player in art, fashion, cuisine, and diplomacy, boasting a diverse landscape from the Alps to the Mediterranean coast.' additional_kwargs={} response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-01T18:53:58.047793Z', 'done': True, 'done_reason': 'stop', 'total_duration': 6935839750, 'load_duration': 94890834, 'prompt_eval_count': 17, 'prompt_eval_duration': 307471584, 'eval_count': 55, 'eval_duration': 6532500625, 'model_name': 'gemma3:4b'} id='run-22807df6-f196-430f-8425-ccdc0a5deb16-0' usage_metadata={'input_tokens': 17, 'output_tokens': 55, 'total_tokens': 72}</code></pre>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="14">
+<p>France is a country renowned for its rich history, vibrant culture, and iconic landmarks like the Eiffel Tower and Louvre Museum. It’s a major global player in art, fashion, cuisine, and diplomacy, boasting a diverse landscape from the Alps to the Mediterranean coast.</p>
+</div>
+</div>
+</section>
+<section id="use-the-built-in-messages-classes-in-langchain" class="level2">
+<h2 class="anchored" data-anchor-id="use-the-built-in-messages-classes-in-langchain">Use the built-in messages classes in LangChain</h2>
+<p>We are using a class called HumanMessage</p>
+<div id="d529230f" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langchain_core.messages <span class="im">import</span> HumanMessage</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>prompt <span class="op">=</span> <span class="st">"Tell me something about Canada in two sentences."</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a Message</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>msg <span class="op">=</span> HumanMessage(content <span class="op">=</span> prompt, name <span class="op">=</span> <span class="st">"Shefali"</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Make a message list</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>messages <span class="op">=</span> [msg]</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Invoke the model with a list of messages</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure ollama is running on your system</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> gemma3.invoke(messages)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(response)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>Markdown(response.content)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>content='Canada is a vast and diverse country, known for its stunning natural landscapes like the Rocky Mountains and the Canadian Rockies. It’s also one of the world’s leading exporters of natural resources and boasts a multicultural society with a strong emphasis on peacekeeping and diplomacy.' additional_kwargs={} response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-01T18:54:04.986852Z', 'done': True, 'done_reason': 'stop', 'total_duration': 6905060917, 'load_duration': 107695833, 'prompt_eval_count': 18, 'prompt_eval_duration': 341124750, 'eval_count': 53, 'eval_duration': 6455340000, 'model_name': 'gemma3:4b'} id='run-44e2002a-e1a6-4a67-8e77-b6a46d2591af-0' usage_metadata={'input_tokens': 18, 'output_tokens': 53, 'total_tokens': 71}</code></pre>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="15">
+<p>Canada is a vast and diverse country, known for its stunning natural landscapes like the Rocky Mountains and the Canadian Rockies. It’s also one of the world’s leading exporters of natural resources and boasts a multicultural society with a strong emphasis on peacekeeping and diplomacy.</p>
 </div>
 </div>
 <p>We get an <code>AIMessage</code> back.</p>
-<p>We can directly pass a string to the model instead of message list.</p>
-<div id="aa3f179a" class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> gemma3.invoke(<span class="st">"Tell me about Canada in 2 sentences."</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(response.content)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="use-stream-method-to-call-the-model" class="level2">
+<h2 class="anchored" data-anchor-id="use-stream-method-to-call-the-model">Use stream method to call the model</h2>
+<p>Response is printed as it is being generated.</p>
+<div id="075658b0" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chunk <span class="kw">in</span> gemma3.stream(<span class="st">"Tell me about Canada in 4 sentences."</span>):</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(chunk.content, end<span class="op">=</span><span class="st">""</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Canada is a vast and diverse country located in North America, known for its stunning natural landscapes like the Rocky Mountains and the Canadian Shield. It’s a multicultural nation with a strong economy, a welcoming society, and a reputation for peacekeeping and diplomacy.</code></pre>
+<pre><code>Canada is a vast and diverse country located in North America, known for its stunning natural landscapes including the Rocky Mountains, the Canadian Shield, and the Atlantic coastline. It’s a constitutional monarchy with a parliamentary system of government and is renowned for its multiculturalism and welcoming immigration policies. Canada boasts a thriving economy driven by natural resources, technology, and a strong service sector.  With a population of over 38 million, it’s a friendly and progressive nation committed to social programs and environmental sustainability.</code></pre>
 </div>
 </div>
 </section>
-<section id="use-stream-method" class="level2">
-<h2 class="anchored" data-anchor-id="use-stream-method">Use stream method</h2>
-<ul>
-<li>Response is printed as it is being generated.</li>
-</ul>
-<div id="bb692428" class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chunk <span class="kw">in</span> gemma3.stream(<span class="st">"Tell me about Canada in 4 sentences."</span>):</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(chunk.content, end<span class="op">=</span><span class="st">""</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Canada is a vast and diverse country located in North America, known for its stunning natural landscapes including the Rocky Mountains, the Canadian Shield, and the Atlantic coastline. It’s a constitutional monarchy with a parliamentary system of government and is renowned for its multiculturalism and welcoming immigration policies.  Canada boasts a thriving economy driven by natural resources, technology, and a strong service sector.  With a population of over 38 million, it’s a friendly and progressive nation committed to social programs and environmental sustainability.</code></pre>
-</div>
-</div>
-</section>
-</section>
-<section id="different-types-of-messages" class="level1">
-<h1>Different types of messages</h1>
-<p>TO DO - Human Message - System Message - AI Message - Tool Message - Any other?</p>
 </section>
 
 </main>
