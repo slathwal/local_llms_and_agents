@@ -1,0 +1,147 @@
+---
+title: "Basics of Ollama - Use Ollama Python library"
+author: "Shefali Lathwal"
+date: "2025-06-01"
+date-modified: last-modified
+editor: visual
+toc: true
+format: html
+jupyter: python_langchain
+---
+
+# Import the ollama python package
+
+```{python}
+import ollama
+from IPython.display import Markdown, display
+```
+
+# List the available models
+
+```{python}
+response = ollama.list()
+for item in response:
+    for model in item[1]:
+        print(model["model"])
+```
+
+# Chat with a local model
+
+## Chat using the generate API endpoint
+
+Generate the full response at once
+
+```{python}
+res = ollama.generate(model='gemma3:4b', prompt='Why does Canada have a king? Answer in 2 lines')
+```
+
+Look at the answer
+
+```{python}
+Markdown(res["response"])
+```
+
+Generate a streaming response
+
+```{python}
+res = ollama.generate(model='gemma3:4b', prompt='Tell me about USA? Answer in 2 lines', stream = True)
+```
+
+Look at the answer
+
+```{python}
+for chunk in res:
+    print(chunk["response"], end = "")
+```
+
+## Chat using the chat API endpoint
+
+The ollama chat endpoint takes several parameters such as model, messages, and stream. The messages parameter is a list of dictionaries. Each dictionary contains two keys - a role and content. Message Role can be "user", "system",or "assistant"
+
+By default, each chat generates a new response and does not preserve history.
+
+```{python}
+res = ollama.chat(
+    model = "gemma3:4b", 
+    messages = [
+        {"role": "user","content":"Hello, how are you?"}
+        ]              
+    )
+```
+
+```{python}
+res["message"]["content"]
+```
+
+Generate a streaming response.
+
+```{python}
+res = ollama.chat(
+    model = "gemma3:4b", 
+    messages = [
+        {"role": "user","content":"tell me about Toronto in 2 lines?"}
+        ],
+    stream = True              
+    )
+```
+
+```{python}
+for chunk in res:
+    print(chunk.message.content, end = "", flush = True)
+```
+
+# Preserve the chat history by appending messages
+
+To keep a history of the messages, we can keep appending messages in the list
+
+Reference: https://github.com/ollama/ollama-python/issues/242
+
+```{python}
+model = "gemma3:4b"
+messages = []
+def chat(message):
+    # Define the messages parameter
+    user_message = {
+        "role": "user",
+        "content": message
+    }
+    messages.append(user_message)
+    # Call the model
+    response = ollama.chat(model = model, messages = messages, stream = False)
+    answer = response.message.content
+    messages.append(response.message)
+    return answer
+
+answer = chat("Tell me about Toronto in 2 lines.")
+Markdown(answer)
+```
+
+```{python}
+answer = chat("Tell me two more things about Toronto in 2 lines.")
+Markdown(answer)
+```
+
+```{python}
+answer = chat("My name is Shefali")
+Markdown(answer)
+```
+
+```{python}
+answer = chat("Do you remember my name?")
+Markdown(answer)
+```
+
+Look at the messages so far in history.
+
+```{python}
+messages
+```
+
+# Look at the running models
+
+```{python}
+for model in ollama.ps().models:
+    print(model.model)
+```
+
+Unfortunately, the python library does not provide a function to stop a running model.
