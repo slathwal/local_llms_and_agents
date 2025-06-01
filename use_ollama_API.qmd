@@ -1,0 +1,65 @@
+---
+title: "Basics of Ollama - Use Ollama API"
+author: "Shefali Lathwal"
+date: "2025-05-30"
+date-modified: last-modified
+editor: visual
+toc: true
+format: html
+jupyter: python_langchain
+---
+
+# Interact directly with local Ollama API
+
+Before performing this step, make sure that Ollama is installed and running on your local machine. \## Define the url, data to be sent and get back the response
+
+# Get the full response from the model in a single Json object
+
+```{python}
+import requests
+import json
+
+url = "http://localhost:11434/api/generate" # To generate text response
+
+prompt = "Tell me something about Canada in brief - 2 lines maximum."
+
+data = {
+    "model":"gemma3:4b",
+    "prompt": prompt,
+    "stream": False
+}
+
+
+response_full = requests.post(url, json = data)
+```
+
+```{python}
+response_full.json()["response"]
+```
+
+## Check the streaming response from the model (as a series of JSONs) and print the response
+
+```{python}
+data = {
+    "model":"gemma3:4b",
+    "prompt": prompt,
+    "stream": True
+}
+
+response_stream = requests.post(url, json = data)
+```
+
+```{python}
+if response_stream.status_code == 200:
+    print("Generated Text:", end = "\n")
+    for line in response_stream.iter_lines():
+        if line:
+            decoded_line = line.decode("utf-8")
+            result = json.loads(decoded_line)
+            
+            generated_text = result.get("response","")
+            print(generated_text, end = "")
+else:
+    print("Error:", response_stream.status_code, response_stream.text)
+
+```
