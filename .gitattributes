@@ -1,1 +1,2 @@
 outputs/** linguist-documentation
+*.qmd -linguist-documentation
