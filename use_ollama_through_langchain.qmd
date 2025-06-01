@@ -14,6 +14,7 @@ jupyter: python_langchain
 Use ollama chat interface with Langchain
 
 ChatOllama is langchain's abstraction to the ollama API endpoint.
+
 ```{python}
 from langchain_ollama import ChatOllama
 
@@ -30,13 +31,9 @@ We use two main methods to interact with Chat Models
 
 For the rest of the section, we will focus on the invoke method.
 
-Now to get a response back from a model, we first need to pass a text, called prompt, to the model. 
+Now to get a response back from a model, we first need to pass a text, called prompt, to the model.
 
-We can do the following:
-- Pass a string directly
-- pass a list of messages containing dictionaries
-- pass messages using the class ChatPromptTemplate
-- pass a list of messages containing different messsages objects
+We can do the following: - Pass a string directly - pass a list of messages containing dictionaries - pass messages using the class ChatPromptTemplate - pass a list of messages containing different messsages objects
 
 ## Directly pass a prompt to the model
 
@@ -48,6 +45,7 @@ Markdown(response.content)
 ```
 
 ## Use a message list with a dictionary containing a role and content fields
+
 Chat models take this prompt as a message. Messages have a:
 
 -   role (that describes who is saying the message)
@@ -67,13 +65,10 @@ If we look at the output above, we see that the model returns an object called `
 
 ## Re-use a prompt by defining a template
 
-We can define a user prompt that takes variables as input and keep re-using the prompt.
-We need this capability because of the following reasons:
-1. As we build more complex workflows, prompts can get long and detailed and we do not want to type them repeatedly. Thereofre, we can create templates and re-use them with minor changes.
-2. LangChain provides prompts for some common tasks such as Q&A, summarization, connecting SQL databases, connecting to APIs, so we can use built-in prompt templates from langchain.
-3. LangChain support output parsing. You can ask outputs to be in specific formats with tags such as "Thought", "Action", "Observation" and prompt templates are a useful abstraction that allow us to extract these keywords. 
+We can define a user prompt that takes variables as input and keep re-using the prompt. We need this capability because of the following reasons: 1. As we build more complex workflows, prompts can get long and detailed and we do not want to type them repeatedly. Thereofre, we can create templates and re-use them with minor changes. 2. LangChain provides prompts for some common tasks such as Q&A, summarization, connecting SQL databases, connecting to APIs, so we can use built-in prompt templates from langchain. 3. LangChain support output parsing. You can ask outputs to be in specific formats with tags such as "Thought", "Action", "Observation" and prompt templates are a useful abstraction that allow us to extract these keywords.
 
-- We define a special object called ChatPromptTemplate
+-   We define a special object called ChatPromptTemplate
+
 ```{python}
 from langchain.prompts import ChatPromptTemplate
 
@@ -84,6 +79,7 @@ prompt_template
 ```
 
 Extract the actual prompt from the template as follows:
+
 ```{python}
 prompt_template.messages[0].prompt, prompt_template.messages[0].prompt.input_variables 
 ```
@@ -91,6 +87,7 @@ prompt_template.messages[0].prompt, prompt_template.messages[0].prompt.input_var
 We can see that the prompt has two input variales.
 
 Create a message from the template using some variable values and pass it to a model
+
 ```{python}
 
 country = "France"
@@ -108,6 +105,7 @@ Markdown(response.content)
 ```
 
 ## Use the built-in messages classes in LangChain
+
 We are using a class called HumanMessage
 
 ```{python}
