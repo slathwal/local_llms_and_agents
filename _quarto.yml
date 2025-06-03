@@ -1,5 +1,6 @@
 project:
   type: website
+  
   output-dir: docs
   execute-dir: project
   render:
@@ -8,6 +9,8 @@ project:
     - "!04_interact_with_csv_using_ollama.qmd"
 
 website:
+  page-navigation: true
+  title: AI Agents and LLMs
   sidebar:
     style: "docked"
     search: true
@@ -25,4 +28,7 @@ website:
           - text: "Using local chat models in LangGraph"
             href: 06_using_local_chat_models_in_langgraph.qmd
 
-
+format:
+  html:
+    theme: yeti
+    toc: true

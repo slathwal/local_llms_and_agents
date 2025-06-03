@@ -9,7 +9,7 @@
 <meta name="author" content="Shefali Lathwal">
 <meta name="dcterms.date" content="2025-04-25">
 
-<title>Using chat models and messages in Graphs - LangGraph</title>
+<title>Using chat models and messages in Graphs - LangGraph – AI Agents and LLMs</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -66,6 +66,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
+<link href="./05_graph_basics_langgraph.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -74,7 +75,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-49c8c4e9abc5c85f6ef827bc95f3ef76.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-2be10d9e998f81ff6e49e26833438aa5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -128,6 +129,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">AI Agents and LLMs</a> 
+    </div>
+      </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
         <div class="sidebar-search">
         <div id="quarto-search" class="" title="Search"></div>
@@ -265,7 +271,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p><code>name</code> - optional, who is creating the message</p></li>
 <li><p><code>response_metadata</code> - optional, a dictionary of metadata that is often specific to each model provider</p></li>
 </ul>
-<div id="bdca3f22" class="cell" data-execution_count="1">
+<div id="da2376f5" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pprint <span class="im">import</span> pprint</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langchain_core.messages <span class="im">import</span> AIMessage, HumanMessage, SystemMessage</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -299,7 +305,7 @@ I want to learn about the best place to see Orcas in the US. Keep your answer to
 <section id="chat-models" class="level1">
 <h1>Chat Models</h1>
 <p>Chat Models can use a sequence of messages as input and support message roles as discussed below. We will use a local model from Ollama</p>
-<div id="e54a0f8c" class="cell" data-execution_count="2">
+<div id="49adc908" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langchain_ollama <span class="im">import</span> ChatOllama</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>gemma3 <span class="op">=</span> ChatOllama(model <span class="op">=</span> <span class="st">"gemma3:4b"</span>, temperature <span class="op">=</span> <span class="dv">0</span>)</span>
@@ -309,12 +315,12 @@ I want to learn about the best place to see Orcas in the US. Keep your answer to
 <pre><code>langchain_core.messages.ai.AIMessage</code></pre>
 </div>
 </div>
-<div id="3614e101" class="cell" data-execution_count="3">
+<div id="5aed2300" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(result)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(result.response_metadata)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>content='For the best chance to see Orcas in the US, the San Juan Islands of Washington State are widely considered the premier location. These islands, part of the Salish Sea, are home to a large resident pod of orcas that primarily feed on salmon. However, you can also spot Transient (Bigg’s) orcas, which hunt marine mammals like seals and sea lions. The summer months (June-September) offer the highest probability of seeing resident orcas, while winter months offer a chance to witness the more elusive Transient orcas. Whale watching tours operate daily from towns like Friday Harbor and Anacortes, offering expert guides and increased chances of a sighting.' additional_kwargs={} response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T22:41:22.527632Z', 'done': True, 'done_reason': 'stop', 'total_duration': 15018564000, 'load_duration': 70994959, 'prompt_eval_count': 73, 'prompt_eval_duration': 1947418583, 'eval_count': 136, 'eval_duration': 12992869208, 'model_name': 'gemma3:4b'} id='run-ce296b85-4fff-4c5e-9235-b2d680e9f090-0' usage_metadata={'input_tokens': 73, 'output_tokens': 136, 'total_tokens': 209}
-{'model': 'gemma3:4b', 'created_at': '2025-06-03T22:41:22.527632Z', 'done': True, 'done_reason': 'stop', 'total_duration': 15018564000, 'load_duration': 70994959, 'prompt_eval_count': 73, 'prompt_eval_duration': 1947418583, 'eval_count': 136, 'eval_duration': 12992869208, 'model_name': 'gemma3:4b'}</code></pre>
+<pre><code>content='For the best chance to see Orcas in the US, the San Juan Islands of Washington State are widely considered the premier location. These islands, part of the Salish Sea, are home to a large resident pod of orcas that primarily feed on salmon. However, you can also spot Transient (Bigg’s) orcas, which hunt marine mammals like seals and sea lions. The summer months (June-September) offer the highest probability of seeing resident orcas, while winter months offer a chance to witness the more elusive Transient orcas. Whale watching tours operate daily from towns like Friday Harbor and Anacortes, offering expert guides and increased chances of a sighting.' additional_kwargs={} response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:15.261786Z', 'done': True, 'done_reason': 'stop', 'total_duration': 15642801375, 'load_duration': 109076167, 'prompt_eval_count': 73, 'prompt_eval_duration': 1926795958, 'eval_count': 136, 'eval_duration': 13603448792, 'model_name': 'gemma3:4b'} id='run-9b665ac1-cd2b-4060-9866-057814d6ba8d-0' usage_metadata={'input_tokens': 73, 'output_tokens': 136, 'total_tokens': 209}
+{'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:15.261786Z', 'done': True, 'done_reason': 'stop', 'total_duration': 15642801375, 'load_duration': 109076167, 'prompt_eval_count': 73, 'prompt_eval_duration': 1926795958, 'eval_count': 136, 'eval_duration': 13603448792, 'model_name': 'gemma3:4b'}</code></pre>
 </div>
 </div>
 </section>
@@ -326,7 +332,7 @@ I want to learn about the best place to see Orcas in the US. Keep your answer to
 <li>It’s defined as a <code>TypedDict</code> with a single key:<code>messages</code></li>
 <li><code>messages</code> is simply a list of type <code>AnyMessage</code>, meaning it’s a list of messages.</li>
 </ul>
-<div id="cbf02deb" class="cell" data-execution_count="4">
+<div id="11ef3343" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> TypedDict</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langchain_core.messages <span class="im">import</span> AnyMessage</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -345,7 +351,7 @@ I want to learn about the best place to see Orcas in the US. Keep your answer to
 <li>The above ensures that state updates we send to our graph are appended to the existing list of messages.</li>
 <li>We annotate our key with a reducer function as metadata using <code>Annotated</code> from <code>typing</code>.</li>
 </ul>
-<div id="3051ea37" class="cell" data-execution_count="5">
+<div id="53ebc958" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Annotated</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langchain_core.messages <span class="im">import</span> AnyMessage</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langgraph.graph.message <span class="im">import</span> add_messages</span>
@@ -354,7 +360,7 @@ I want to learn about the best place to see Orcas in the US. Keep your answer to
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    messages: Annotated[<span class="bu">list</span>[AnyMessage], add_messages]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Since the above operation is so common, langgraph provides a pre-built <code>MessagesState</code> This state has the following: - A pre-built single <code>messages</code> key - which is a list of <code>AnyMessage</code> objects that uses the <code>add_messages</code> reducer.</p>
-<div id="198fb2ef" class="cell" data-execution_count="6">
+<div id="f5366e74" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langgraph.graph <span class="im">import</span> MessagesState</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> State(MessagesState):</span>
@@ -363,7 +369,7 @@ I want to learn about the best place to see Orcas in the US. Keep your answer to
 </div>
 <p>The classes <code>State</code> and <code>MessageState</code> work equivalently.</p>
 <p>Let’s look at how add_messages function works in isolation.</p>
-<div id="51a3dab3" class="cell" data-execution_count="7">
+<div id="08bc13e6" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>initial_messages <span class="op">=</span> [AIMessage(content <span class="op">=</span> <span class="st">"hello, how can I assist you?"</span>),</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>HumanMessage(content <span class="op">=</span> <span class="st">"I'm looking for information on marine biology"</span>)]</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -373,15 +379,15 @@ I want to learn about the best place to see Orcas in the US. Keep your answer to
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>add_messages(initial_messages, new_message)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>[AIMessage(content='hello, how can I assist you?', additional_kwargs={}, response_metadata={}, id='3c95e22c-dbd5-4c96-b15f-d642bc22889d'),
- HumanMessage(content="I'm looking for information on marine biology", additional_kwargs={}, response_metadata={}, id='49805a1a-972d-461e-ab24-427452a4fffa'),
- AIMessage(content='Sure, I can help with that. What specifically are you interested in?', additional_kwargs={}, response_metadata={}, id='aa8a0528-6c67-4ff1-8b46-07edcb2c663d')]</code></pre>
+<pre><code>[AIMessage(content='hello, how can I assist you?', additional_kwargs={}, response_metadata={}, id='aafeff24-efa6-48a6-a72f-92d19baacf41'),
+ HumanMessage(content="I'm looking for information on marine biology", additional_kwargs={}, response_metadata={}, id='d7448e16-3f60-4a01-9e5b-f33411345148'),
+ AIMessage(content='Sure, I can help with that. What specifically are you interested in?', additional_kwargs={}, response_metadata={}, id='2757efea-ee44-46f4-900e-2d0f680693fa')]</code></pre>
 </div>
 </div>
 </section>
 <section id="make-a-graph" class="level1">
 <h1>Make a graph</h1>
-<div id="6fe582b3" class="cell" data-execution_count="8">
+<div id="3a4b1bc1" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Image, display</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> langgraph.graph <span class="im">import</span> StateGraph, START, END</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -414,22 +420,22 @@ I want to learn about the best place to see Orcas in the US. Keep your answer to
 </section>
 <section id="run-the-graph" class="level1">
 <h1>Run the graph</h1>
-<div id="053cc314" class="cell" data-execution_count="9">
+<div id="5c838ec7" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> graph.invoke({<span class="st">"messages"</span>: HumanMessage(content <span class="op">=</span> <span class="st">"hello, how are you today"</span>)})</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>result</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
-<pre><code>{'messages': [HumanMessage(content='hello, how are you today', additional_kwargs={}, response_metadata={}, id='127f85d2-e857-4861-8e85-0e7e253324c8'),
-  AIMessage(content='I’m doing great, thanks for asking! As a large language model, I don’t really *feel* in the way humans do, but my systems are running smoothly and I’m ready to chat. 😊 \n\nHow about you? How is *your* day going so far? \n\nDo you want to talk about something specific, or just have a general conversation?', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T22:41:30.831955Z', 'done': True, 'done_reason': 'stop', 'total_duration': 8128512167, 'load_duration': 74959333, 'prompt_eval_count': 15, 'prompt_eval_duration': 232968416, 'eval_count': 80, 'eval_duration': 7819981834, 'model_name': 'gemma3:4b'}, id='run-fb71fb3f-dfa0-4220-9a69-485063436539-0', usage_metadata={'input_tokens': 15, 'output_tokens': 80, 'total_tokens': 95})]}</code></pre>
+<pre><code>{'messages': [HumanMessage(content='hello, how are you today', additional_kwargs={}, response_metadata={}, id='8cac55d8-4004-4383-b4df-12fc4384efaa'),
+  AIMessage(content='I’m doing great, thanks for asking! As a large language model, I don’t really *feel* in the way humans do, but my systems are running smoothly and I’m ready to chat. 😊 \n\nHow about you? How is *your* day going so far? \n\nDo you want to talk about something specific, or just have a general conversation?', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:23.517882Z', 'done': True, 'done_reason': 'stop', 'total_duration': 8060671291, 'load_duration': 63764250, 'prompt_eval_count': 15, 'prompt_eval_duration': 233351084, 'eval_count': 80, 'eval_duration': 7762857791, 'model_name': 'gemma3:4b'}, id='run-ea93a7c2-2ecf-4f0e-b995-890a570137b8-0', usage_metadata={'input_tokens': 15, 'output_tokens': 80, 'total_tokens': 95})]}</code></pre>
 </div>
 </div>
-<div id="c85b86ed" class="cell" data-execution_count="10">
+<div id="76b8e86b" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> graph.invoke({<span class="st">"messages"</span>: HumanMessage(content <span class="op">=</span> <span class="st">"tell me about marine biology in 2 sentences."</span>)})</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(result)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>{'messages': [HumanMessage(content='tell me about marine biology in 2 sentences.', additional_kwargs={}, response_metadata={}, id='380554a1-ff2c-406c-8a7f-84d55c4195e0'), AIMessage(content='Marine biology is the scientific study of life in the ocean, encompassing everything from microscopic plankton to massive whales and the complex ecosystems they inhabit. It explores the diverse adaptations, behaviors, and interactions of marine organisms and their environment, crucial for understanding and protecting our oceans.', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T22:41:36.366041Z', 'done': True, 'done_reason': 'stop', 'total_duration': 5517056583, 'load_duration': 53255250, 'prompt_eval_count': 19, 'prompt_eval_duration': 306344833, 'eval_count': 54, 'eval_duration': 5156650375, 'model_name': 'gemma3:4b'}, id='run-58aae3b4-63be-40fb-ac7c-306183482eca-0', usage_metadata={'input_tokens': 19, 'output_tokens': 54, 'total_tokens': 73})]}</code></pre>
+<pre><code>{'messages': [HumanMessage(content='tell me about marine biology in 2 sentences.', additional_kwargs={}, response_metadata={}, id='7c62138b-ed49-4415-a47a-b494d14e446e'), AIMessage(content='Marine biology is the scientific study of life in the ocean, encompassing everything from microscopic plankton to massive whales and the complex ecosystems they inhabit. It explores the diverse adaptations, behaviors, and interactions of marine organisms and their environment, crucial for understanding and protecting our oceans.', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:29.020415Z', 'done': True, 'done_reason': 'stop', 'total_duration': 5486549750, 'load_duration': 57485916, 'prompt_eval_count': 19, 'prompt_eval_duration': 293024833, 'eval_count': 54, 'eval_duration': 5135490167, 'model_name': 'gemma3:4b'}, id='run-f144c8cb-173e-412a-a99b-f1930eb02664-0', usage_metadata={'input_tokens': 19, 'output_tokens': 54, 'total_tokens': 73})]}</code></pre>
 </div>
 </div>
-<div id="965e8b63" class="cell" data-execution_count="11">
+<div id="362c19e1" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>result[<span class="st">"messages"</span>][<span class="op">-</span><span class="dv">1</span>].content</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
 <pre><code>'Marine biology is the scientific study of life in the ocean, encompassing everything from microscopic plankton to massive whales and the complex ecosystems they inhabit. It explores the diverse adaptations, behaviors, and interactions of marine organisms and their environment, crucial for understanding and protecting our oceans.'</code></pre>
@@ -857,6 +863,15 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   }
 });
 </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./05_graph_basics_langgraph.html" class="pagination-link" aria-label="LangGraph Basics">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">LangGraph Basics</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+  </div>
+</nav>
 </div> <!-- /content -->
 
 

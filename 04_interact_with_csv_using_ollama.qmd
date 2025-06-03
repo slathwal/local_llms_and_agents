@@ -7,6 +7,8 @@ editor: visual
 toc: true
 format: html
 jupyter: python_langchain
+execute:
+  freeze: auto
 ---
 
 ::: callout-note

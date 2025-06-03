@@ -7,6 +7,8 @@ editor: visual
 toc: true
 format: html
 jupyter: python_langchain
+execute:
+  freeze: auto
 ---
 
 # Connect to an Ollama Model
@@ -136,6 +138,7 @@ for chunk in gemma3.stream("Tell me about Canada in 4 sentences."):
 ```
 
 # Use community tools available in LangChain
+
 As an example, we are going to look at a tool to get search results from the web. Note, just using the tool does not require calling an LLM. Tools are independent and can be used with an LLM, but also independently.
 
 ```{python}

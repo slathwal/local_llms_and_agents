@@ -7,6 +7,8 @@ editor: visual
 toc: true
 format: html
 jupyter: python_langchain
+execute:
+  freeze: auto
 ---
 
 # Goals
@@ -159,6 +161,7 @@ result
 result = graph.invoke({"messages": HumanMessage(content = "tell me about marine biology in 2 sentences.")})
 print(result)
 ```
+
 ```{python}
 result["messages"][-1].content
 ```
