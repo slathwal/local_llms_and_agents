@@ -1,0 +1,164 @@
+---
+title: "Using chat models and messages in Graphs - LangGraph"
+author: "Shefali Lathwal"
+date: "2025-04-25"
+date-modified: last-modified
+editor: visual
+toc: true
+format: html
+jupyter: python_langchain
+---
+
+# Goals
+
+-   We will use chat messages in our graph
+-   We will use chat models in our graph
+
+# Messages
+
+Chat models can use `messages`, which capture different roles within a conversation.
+
+LangChain supports various message types, including `HumanMessage` , `AIMessage`, `SystemMessage`, and `ToolMessage`.
+
+These represent messages from the user, from the chat model, for the chat model to instruct behaviour, and from a tool call.
+
+Each message can be supplied with the following:
+
+-   `content` - content of the message
+
+-   `name` - optional, who is creating the message
+
+-   `response_metadata` - optional, a dictionary of metadata that is often specific to each model provider
+
+```{python}
+from pprint import pprint
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+
+messages = [AIMessage(content = f"So you said you were researching ocean mammals?", name = "Model")]
+messages.extend([HumanMessage(content=f"Yes, that's right.", name = "Lance")])
+messages.extend([AIMessage(content = f"Great, what would you like to learn about?", name = "Model")])
+messages.extend([HumanMessage(content = f"I want to learn about the best place to see Orcas in the US. Keep your answer to one paragraph.", name = "Lance")])
+
+for m in messages:
+    m.pretty_print()
+```
+
+# Chat Models
+
+Chat Models can use a sequence of messages as input and support message roles as discussed below. We will use a local model from Ollama
+
+```{python}
+from langchain_ollama import ChatOllama
+
+gemma3 = ChatOllama(model = "gemma3:4b", temperature = 0)
+result = gemma3.invoke(messages)
+type(result)
+```
+
+```{python}
+print(result)
+print(result.response_metadata)
+```
+
+# Using messages as graph state
+
+With the above foundations in place, we can now use `messages` in our graph state.
+
+-   Let's define our state `MessageState`.
+-   It's defined as a `TypedDict` with a single key:`messages`
+-   `messages` is simply a list of type `AnyMessage`, meaning it's a list of messages.
+
+```{python}
+from typing import TypedDict
+from langchain_core.messages import AnyMessage
+
+class MessageState(TypedDict):
+    messages: list[AnyMessage]
+```
+
+# Reducers
+
+Reducers are functions that allow us to specify how to handle state updates as we move through a graph.
+
+Now, as the graph runs, we do not want to overwrite messages, rather append our messages to our `messages` state key. The above problem motivates the idea of a reducer function.
+
+-   Reducer functions allow us to specify how state updates are performed.
+-   if no reducer function is explicitly specified, then it is assumed that all updates to that key should override it.
+-   Since we want to append messages, we can use a pre-built `add_messages` reducer!
+-   The above ensures that state updates we send to our graph are appended to the existing list of messages.
+-   We annotate our key with a reducer function as metadata using `Annotated` from `typing`.
+
+```{python}
+from typing import Annotated
+from langchain_core.messages import AnyMessage
+from langgraph.graph.message import add_messages
+
+class MessageState(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
+```
+
+Since the above operation is so common, langgraph provides a pre-built `MessagesState` This state has the following: - A pre-built single `messages` key - which is a list of `AnyMessage` objects that uses the `add_messages` reducer.
+
+```{python}
+from langgraph.graph import MessagesState
+
+class State(MessagesState):
+    # Add any other keys you need besides messages, which is pre-built
+    pass
+```
+
+The classes `State` and `MessageState` work equivalently.
+
+Let's look at how add_messages function works in isolation.
+
+```{python}
+initial_messages = [AIMessage(content = "hello, how can I assist you?"),
+HumanMessage(content = "I'm looking for information on marine biology")]
+
+# new message to add
+new_message = AIMessage(content = "Sure, I can help with that. What specifically are you interested in?")
+
+#
+add_messages(initial_messages, new_message)
+```
+
+# Make a graph
+
+```{python}
+from IPython.display import Image, display
+from langgraph.graph import StateGraph, START, END
+
+# Define a state class
+class State(MessagesState):
+    # Add any additional keys apart from messages
+    pass
+
+# Define a node
+def calling_an_llm(state: State):
+    return {"messages": [gemma3.invoke(state["messages"])]}
+
+# Build graph
+builder = StateGraph(State)
+builder.add_node("llm_call", calling_an_llm)
+builder.add_edge(START, "llm_call")
+builder.add_edge("llm_call", END)
+graph = builder.compile()
+
+# View the graph
+display(Image(graph.get_graph().draw_mermaid_png()))
+```
+
+# Run the graph
+
+```{python}
+result = graph.invoke({"messages": HumanMessage(content = "hello, how are you today")})
+result
+```
+
+```{python}
+result = graph.invoke({"messages": HumanMessage(content = "tell me about marine biology in 2 sentences.")})
+print(result)
+```
+```{python}
+result["messages"][-1].content
+```
