@@ -5,6 +5,10 @@ toc: false
 jupyter: python_langchain
 ---
 
+::: {.callout-note}
+This website is being actively developed.
+:::
+
 This website contains example notebooks that show how to interact with LLMs installed on your local machine using ollama. The notebooks include examples of simple tasks such as chatting with the local model, as well as more complex agentic workflows. Use the sidebar to navigate through the notebooks.
 
 # Tools

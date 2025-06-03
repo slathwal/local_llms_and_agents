@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Learn to Build AI agents with Local LLMs",
     "section": "",
-    "text": "This website contains example notebooks that show how to interact with LLMs installed on your local machine using ollama. The notebooks include examples of simple tasks such as chatting with the local model, as well as more complex agentic workflows. Use the sidebar to navigate through the notebooks.\n\nTools\n\nOllama\nLangchain\nLangGraph\n\n\n\nReferences\n\nLangchain academy course - Introduction to LangGraph\nDeeplearning.AI short course - LangChain for LLM Application Development\nDeeplearning.AI short course - Building your own Database Agent\nfreeCodeCamp Youtube Video - Build AI agents locally\nTech with Tim Youtube Video - How to Build a Local AI agent with python",
+    "text": "Note\n\n\n\nThis website is being actively developed.\n\n\nThis website contains example notebooks that show how to interact with LLMs installed on your local machine using ollama. The notebooks include examples of simple tasks such as chatting with the local model, as well as more complex agentic workflows. Use the sidebar to navigate through the notebooks.\n\nTools\n\nOllama\nLangchain\nLangGraph\n\n\n\nReferences\n\nLangchain academy course - Introduction to LangGraph\nDeeplearning.AI short course - LangChain for LLM Application Development\nDeeplearning.AI short course - Building your own Database Agent\nfreeCodeCamp Youtube Video - Build AI agents locally\nTech with Tim Youtube Video - How to Build a Local AI agent with python",
     "crumbs": [
       "Introduction"
     ]
