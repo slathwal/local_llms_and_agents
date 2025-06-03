@@ -1,4 +1,6 @@
 Note: This repository is being actively developed.
+# Website
+To see an overview of the notebooks in this website, visit: https://slathwal.github.io/local_llms_and_agents
 
 # Goal
 This repository will contain notebooks that show how to interact with LLMs installed on my local machine using ollama.
