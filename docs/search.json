@@ -1,13 +1,122 @@
 [
   {
-    "objectID": "06_using_local_chat_models_in_langgraph.html",
-    "href": "06_using_local_chat_models_in_langgraph.html",
-    "title": "Using chat models and messages in Graphs - LangGraph",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Learn to Build AI agents with Local LLMs",
     "section": "",
-    "text": "Goals\n\nWe will use chat messages in our graph\nWe will use chat models in our graph\n\n\n\nMessages\nChat models can use messages, which capture different roles within a conversation.\nLangChain supports various message types, including HumanMessage , AIMessage, SystemMessage, and ToolMessage.\nThese represent messages from the user, from the chat model, for the chat model to instruct behaviour, and from a tool call.\nEach message can be supplied with the following:\n\ncontent - content of the message\nname - optional, who is creating the message\nresponse_metadata - optional, a dictionary of metadata that is often specific to each model provider\n\n\nfrom pprint import pprint\nfrom langchain_core.messages import AIMessage, HumanMessage, SystemMessage\n\nmessages = [AIMessage(content = f\"So you said you were researching ocean mammals?\", name = \"Model\")]\nmessages.extend([HumanMessage(content=f\"Yes, that's right.\", name = \"Lance\")])\nmessages.extend([AIMessage(content = f\"Great, what would you like to learn about?\", name = \"Model\")])\nmessages.extend([HumanMessage(content = f\"I want to learn about the best place to see Orcas in the US. Keep your answer to one paragraph.\", name = \"Lance\")])\n\nfor m in messages:\n    m.pretty_print()\n\n================================== Ai Message ==================================\nName: Model\n\nSo you said you were researching ocean mammals?\n================================ Human Message =================================\nName: Lance\n\nYes, that's right.\n================================== Ai Message ==================================\nName: Model\n\nGreat, what would you like to learn about?\n================================ Human Message =================================\nName: Lance\n\nI want to learn about the best place to see Orcas in the US. Keep your answer to one paragraph.\n\n\n\n\nChat Models\nChat Models can use a sequence of messages as input and support message roles as discussed below. We will use a local model from Ollama\n\nfrom langchain_ollama import ChatOllama\n\ngemma3 = ChatOllama(model = \"gemma3:4b\", temperature = 0)\nresult = gemma3.invoke(messages)\ntype(result)\n\nlangchain_core.messages.ai.AIMessage\n\n\n\nprint(result)\nprint(result.response_metadata)\n\ncontent='For the best chance to see Orcas in the US, the San Juan Islands of Washington State are widely considered the premier location. These islands, part of the Salish Sea, are home to a large resident pod of orcas that primarily feed on salmon. However, you can also spot Transient (Bigg’s) orcas, which hunt marine mammals like seals and sea lions. The summer months (June-September) offer the highest probability of seeing resident orcas, while winter months offer a chance to witness the more elusive Transient orcas. Whale watching tours operate daily from towns like Friday Harbor and Anacortes, offering expert guides and increased chances of a sighting.' additional_kwargs={} response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:15.261786Z', 'done': True, 'done_reason': 'stop', 'total_duration': 15642801375, 'load_duration': 109076167, 'prompt_eval_count': 73, 'prompt_eval_duration': 1926795958, 'eval_count': 136, 'eval_duration': 13603448792, 'model_name': 'gemma3:4b'} id='run-9b665ac1-cd2b-4060-9866-057814d6ba8d-0' usage_metadata={'input_tokens': 73, 'output_tokens': 136, 'total_tokens': 209}\n{'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:15.261786Z', 'done': True, 'done_reason': 'stop', 'total_duration': 15642801375, 'load_duration': 109076167, 'prompt_eval_count': 73, 'prompt_eval_duration': 1926795958, 'eval_count': 136, 'eval_duration': 13603448792, 'model_name': 'gemma3:4b'}\n\n\n\n\nUsing messages as graph state\nWith the above foundations in place, we can now use messages in our graph state.\n\nLet’s define our state MessageState.\nIt’s defined as a TypedDict with a single key:messages\nmessages is simply a list of type AnyMessage, meaning it’s a list of messages.\n\n\nfrom typing import TypedDict\nfrom langchain_core.messages import AnyMessage\n\nclass MessageState(TypedDict):\n    messages: list[AnyMessage]\n\n\n\nReducers\nReducers are functions that allow us to specify how to handle state updates as we move through a graph.\nNow, as the graph runs, we do not want to overwrite messages, rather append our messages to our messages state key. The above problem motivates the idea of a reducer function.\n\nReducer functions allow us to specify how state updates are performed.\nif no reducer function is explicitly specified, then it is assumed that all updates to that key should override it.\nSince we want to append messages, we can use a pre-built add_messages reducer!\nThe above ensures that state updates we send to our graph are appended to the existing list of messages.\nWe annotate our key with a reducer function as metadata using Annotated from typing.\n\n\nfrom typing import Annotated\nfrom langchain_core.messages import AnyMessage\nfrom langgraph.graph.message import add_messages\n\nclass MessageState(TypedDict):\n    messages: Annotated[list[AnyMessage], add_messages]\n\nSince the above operation is so common, langgraph provides a pre-built MessagesState This state has the following: - A pre-built single messages key - which is a list of AnyMessage objects that uses the add_messages reducer.\n\nfrom langgraph.graph import MessagesState\n\nclass State(MessagesState):\n    # Add any other keys you need besides messages, which is pre-built\n    pass\n\nThe classes State and MessageState work equivalently.\nLet’s look at how add_messages function works in isolation.\n\ninitial_messages = [AIMessage(content = \"hello, how can I assist you?\"),\nHumanMessage(content = \"I'm looking for information on marine biology\")]\n\n# new message to add\nnew_message = AIMessage(content = \"Sure, I can help with that. What specifically are you interested in?\")\n\n#\nadd_messages(initial_messages, new_message)\n\n[AIMessage(content='hello, how can I assist you?', additional_kwargs={}, response_metadata={}, id='aafeff24-efa6-48a6-a72f-92d19baacf41'),\n HumanMessage(content=\"I'm looking for information on marine biology\", additional_kwargs={}, response_metadata={}, id='d7448e16-3f60-4a01-9e5b-f33411345148'),\n AIMessage(content='Sure, I can help with that. What specifically are you interested in?', additional_kwargs={}, response_metadata={}, id='2757efea-ee44-46f4-900e-2d0f680693fa')]\n\n\n\n\nMake a graph\n\nfrom IPython.display import Image, display\nfrom langgraph.graph import StateGraph, START, END\n\n# Define a state class\nclass State(MessagesState):\n    # Add any additional keys apart from messages\n    pass\n\n# Define a node\ndef calling_an_llm(state: State):\n    return {\"messages\": [gemma3.invoke(state[\"messages\"])]}\n\n# Build graph\nbuilder = StateGraph(State)\nbuilder.add_node(\"llm_call\", calling_an_llm)\nbuilder.add_edge(START, \"llm_call\")\nbuilder.add_edge(\"llm_call\", END)\ngraph = builder.compile()\n\n# View the graph\ndisplay(Image(graph.get_graph().draw_mermaid_png()))\n\n\n\n\n\n\n\n\n\n\nRun the graph\n\nresult = graph.invoke({\"messages\": HumanMessage(content = \"hello, how are you today\")})\nresult\n\n{'messages': [HumanMessage(content='hello, how are you today', additional_kwargs={}, response_metadata={}, id='8cac55d8-4004-4383-b4df-12fc4384efaa'),\n  AIMessage(content='I’m doing great, thanks for asking! As a large language model, I don’t really *feel* in the way humans do, but my systems are running smoothly and I’m ready to chat. 😊 \\n\\nHow about you? How is *your* day going so far? \\n\\nDo you want to talk about something specific, or just have a general conversation?', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:23.517882Z', 'done': True, 'done_reason': 'stop', 'total_duration': 8060671291, 'load_duration': 63764250, 'prompt_eval_count': 15, 'prompt_eval_duration': 233351084, 'eval_count': 80, 'eval_duration': 7762857791, 'model_name': 'gemma3:4b'}, id='run-ea93a7c2-2ecf-4f0e-b995-890a570137b8-0', usage_metadata={'input_tokens': 15, 'output_tokens': 80, 'total_tokens': 95})]}\n\n\n\nresult = graph.invoke({\"messages\": HumanMessage(content = \"tell me about marine biology in 2 sentences.\")})\nprint(result)\n\n{'messages': [HumanMessage(content='tell me about marine biology in 2 sentences.', additional_kwargs={}, response_metadata={}, id='7c62138b-ed49-4415-a47a-b494d14e446e'), AIMessage(content='Marine biology is the scientific study of life in the ocean, encompassing everything from microscopic plankton to massive whales and the complex ecosystems they inhabit. It explores the diverse adaptations, behaviors, and interactions of marine organisms and their environment, crucial for understanding and protecting our oceans.', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:29.020415Z', 'done': True, 'done_reason': 'stop', 'total_duration': 5486549750, 'load_duration': 57485916, 'prompt_eval_count': 19, 'prompt_eval_duration': 293024833, 'eval_count': 54, 'eval_duration': 5135490167, 'model_name': 'gemma3:4b'}, id='run-f144c8cb-173e-412a-a99b-f1930eb02664-0', usage_metadata={'input_tokens': 19, 'output_tokens': 54, 'total_tokens': 73})]}\n\n\n\nresult[\"messages\"][-1].content\n\n'Marine biology is the scientific study of life in the ocean, encompassing everything from microscopic plankton to massive whales and the complex ecosystems they inhabit. It explores the diverse adaptations, behaviors, and interactions of marine organisms and their environment, crucial for understanding and protecting our oceans.'",
+    "text": "This website contains example notebooks that show how to interact with LLMs installed on your local machine using ollama. The notebooks include examples of simple tasks such as chatting with the local model, as well as more complex agentic workflows. Use the sidebar to navigate through the notebooks.\n\nTools\n\nOllama\nLangchain\nLangGraph\n\n\n\nReferences\n\nLangchain academy course - Introduction to LangGraph\nDeeplearning.AI short course - LangChain for LLM Application Development\nDeeplearning.AI short course - Building your own Database Agent\nfreeCodeCamp Youtube Video - Build AI agents locally\nTech with Tim Youtube Video - How to Build a Local AI agent with python",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "05_graph_basics_langgraph.html",
+    "href": "05_graph_basics_langgraph.html",
+    "title": "Graph basics in LangGraph",
+    "section": "",
+    "text": "Nodes (Agent and Tools)\nEdges (Simple, conditional)\n\n\n\nThe first thing you do when you define a graph is to define a State. State is the object that we pass between the nodes and edges of our graph. The state schema serves as the input schema for all Nodes and Edges in the graph.\n\nfrom typing import TypedDict\n\n# Define that state should be a dictionary with a single key - graph_state with values of type string\nclass State(TypedDict):\n    graph_state: str\n\n\n\n\n\n\n\nNote\n\n\n\nTypedDict does not do checking of input during run. We need to do checking separately. If we want to do dynamic checking while running a cell, we need to use BaseModel from pydantic.\n\n\n\n\n\n\nNodes are just python functions\nThe first positional argument is the state.\nEach node operates on the state.\nBy default, each node also overrides the previous state value.\n\n\ndef node_1(state):\n    print(\"---Node 1---\")\n    return {\"graph_state\": state[\"graph_state\"]+\"I am\"}\n\ndef node_2(state):\n    print(\"---Node 2---\")\n    return {\"graph_state\": state[\"graph_state\"]+\" happy!\"}\n\ndef node_3(state):\n    print(\"---Node 3---\")\n    return {\"graph_state\": state[\"graph_state\"]+\" sad!\"}\n\n\n\n\nEdges connect the nodes.\n\nNormal edges are used if you want to go from one node to the next.\nConditional edges are used when you want to optionally route between nodes.\nConditional edge is implemented as a function that returns the next node to visit based on some logic.\n\n\nimport random\nfrom typing import Literal # Literal is used for restricting a value to a fixed set of constants\n\ndef decide_mood(state) -&gt; Literal[\"node_2\", \"node_3\"]:\n\n    # Often, we will use state to decide on the next node to visit\n    # We are not doing anything with the current state right now.\n    user_input = state[\"graph_state\"]\n\n    # Here, we are just doing a 50/50 split\n    if random.random()&lt;0.5:\n        return \"node_2\"\n    \n    return \"node_3\"\n\n\n\n\n\nNow we will build a graph from our components - nodes and edges.\nThe StateGraph class is the one we will use.\nFirst we initialize a StateGraph with the State class we had defined.\nThen, we will add our nodes and edges.\nWe use the START node, a special node that sends user input to the graph, to indicate where to start our graph.\nWe use END node, which is a special node, to indicate end of the graph.\nWe will compile our graph to check the structure of our graph.\nWe will then visualize the graph.\n\n\nfrom IPython.display import Image, display\nfrom langgraph.graph import StateGraph, START, END\n\n# Build graph\nbuilder = StateGraph(State)\nbuilder.add_node(\"node_1\", node_1)\nbuilder.add_node(\"node_2\", node_2)\nbuilder.add_node(\"node_3\", node_3)\n\nbuilder.add_edge(START, \"node_1\")\nbuilder.add_conditional_edges(\"node_1\", decide_mood)\nbuilder.add_edge(\"node_2\", END)\nbuilder.add_edge(\"node_3\", END)\n\n# Compile the graph\ngraph = builder.compile()\n\n# View the graph\ndisplay(Image(graph.get_graph().draw_mermaid_png()))",
     "crumbs": [
       "LangGraph for building AI agents",
-      "Using local chat models in LangGraph"
+      "LangGraph Basics"
+    ]
+  },
+  {
+    "objectID": "05_graph_basics_langgraph.html#define-state",
+    "href": "05_graph_basics_langgraph.html#define-state",
+    "title": "Graph basics in LangGraph",
+    "section": "",
+    "text": "The first thing you do when you define a graph is to define a State. State is the object that we pass between the nodes and edges of our graph. The state schema serves as the input schema for all Nodes and Edges in the graph.\n\nfrom typing import TypedDict\n\n# Define that state should be a dictionary with a single key - graph_state with values of type string\nclass State(TypedDict):\n    graph_state: str\n\n\n\n\n\n\n\nNote\n\n\n\nTypedDict does not do checking of input during run. We need to do checking separately. If we want to do dynamic checking while running a cell, we need to use BaseModel from pydantic.",
+    "crumbs": [
+      "LangGraph for building AI agents",
+      "LangGraph Basics"
+    ]
+  },
+  {
+    "objectID": "05_graph_basics_langgraph.html#define-nodes",
+    "href": "05_graph_basics_langgraph.html#define-nodes",
+    "title": "Graph basics in LangGraph",
+    "section": "",
+    "text": "Nodes are just python functions\nThe first positional argument is the state.\nEach node operates on the state.\nBy default, each node also overrides the previous state value.\n\n\ndef node_1(state):\n    print(\"---Node 1---\")\n    return {\"graph_state\": state[\"graph_state\"]+\"I am\"}\n\ndef node_2(state):\n    print(\"---Node 2---\")\n    return {\"graph_state\": state[\"graph_state\"]+\" happy!\"}\n\ndef node_3(state):\n    print(\"---Node 3---\")\n    return {\"graph_state\": state[\"graph_state\"]+\" sad!\"}",
+    "crumbs": [
+      "LangGraph for building AI agents",
+      "LangGraph Basics"
+    ]
+  },
+  {
+    "objectID": "05_graph_basics_langgraph.html#define-edges",
+    "href": "05_graph_basics_langgraph.html#define-edges",
+    "title": "Graph basics in LangGraph",
+    "section": "",
+    "text": "Edges connect the nodes.\n\nNormal edges are used if you want to go from one node to the next.\nConditional edges are used when you want to optionally route between nodes.\nConditional edge is implemented as a function that returns the next node to visit based on some logic.\n\n\nimport random\nfrom typing import Literal # Literal is used for restricting a value to a fixed set of constants\n\ndef decide_mood(state) -&gt; Literal[\"node_2\", \"node_3\"]:\n\n    # Often, we will use state to decide on the next node to visit\n    # We are not doing anything with the current state right now.\n    user_input = state[\"graph_state\"]\n\n    # Here, we are just doing a 50/50 split\n    if random.random()&lt;0.5:\n        return \"node_2\"\n    \n    return \"node_3\"",
+    "crumbs": [
+      "LangGraph for building AI agents",
+      "LangGraph Basics"
+    ]
+  },
+  {
+    "objectID": "05_graph_basics_langgraph.html#construct-the-graph",
+    "href": "05_graph_basics_langgraph.html#construct-the-graph",
+    "title": "Graph basics in LangGraph",
+    "section": "",
+    "text": "Now we will build a graph from our components - nodes and edges.\nThe StateGraph class is the one we will use.\nFirst we initialize a StateGraph with the State class we had defined.\nThen, we will add our nodes and edges.\nWe use the START node, a special node that sends user input to the graph, to indicate where to start our graph.\nWe use END node, which is a special node, to indicate end of the graph.\nWe will compile our graph to check the structure of our graph.\nWe will then visualize the graph.\n\n\nfrom IPython.display import Image, display\nfrom langgraph.graph import StateGraph, START, END\n\n# Build graph\nbuilder = StateGraph(State)\nbuilder.add_node(\"node_1\", node_1)\nbuilder.add_node(\"node_2\", node_2)\nbuilder.add_node(\"node_3\", node_3)\n\nbuilder.add_edge(START, \"node_1\")\nbuilder.add_conditional_edges(\"node_1\", decide_mood)\nbuilder.add_edge(\"node_2\", END)\nbuilder.add_edge(\"node_3\", END)\n\n# Compile the graph\ngraph = builder.compile()\n\n# View the graph\ndisplay(Image(graph.get_graph().draw_mermaid_png()))",
+    "crumbs": [
+      "LangGraph for building AI agents",
+      "LangGraph Basics"
+    ]
+  },
+  {
+    "objectID": "02_use_ollama_python_library.html",
+    "href": "02_use_ollama_python_library.html",
+    "title": "Basics of Ollama - Use Ollama Python library",
+    "section": "",
+    "text": "import ollama\nfrom IPython.display import Markdown, display",
+    "crumbs": [
+      "Interact with local LLMs through Ollama",
+      "Basics of Ollama - Use Ollama Python library"
+    ]
+  },
+  {
+    "objectID": "02_use_ollama_python_library.html#chat-using-the-generate-api-endpoint",
+    "href": "02_use_ollama_python_library.html#chat-using-the-generate-api-endpoint",
+    "title": "Basics of Ollama - Use Ollama Python library",
+    "section": "Chat using the generate API endpoint",
+    "text": "Chat using the generate API endpoint\nGenerate the full response at once\n\nres = ollama.generate(model='gemma3:4b', prompt='Why does Canada have a king? Answer in 2 lines')\n\nLook at the answer\n\nMarkdown(res[\"response\"])\n\nCanada doesn’t actually have a king! The monarch (currently King Charles III) is Canada’s Head of State, represented by a Governor-General who acts on the monarch’s behalf.\nIt’s a historical holdover from Canada’s time as a British colony.\n\n\nGenerate a streaming response\n\nres = ollama.generate(model='gemma3:4b', prompt='Tell me about USA? Answer in 2 lines', stream = True)\n\nLook at the answer\n\nfor chunk in res:\n    print(chunk[\"response\"], end = \"\")\n\nThe United States of America is a large, diverse country known for its powerful economy, democratic government, and iconic landmarks. It’s a global leader in many fields and a melting pot of cultures and traditions.",
+    "crumbs": [
+      "Interact with local LLMs through Ollama",
+      "Basics of Ollama - Use Ollama Python library"
+    ]
+  },
+  {
+    "objectID": "02_use_ollama_python_library.html#chat-using-the-chat-api-endpoint",
+    "href": "02_use_ollama_python_library.html#chat-using-the-chat-api-endpoint",
+    "title": "Basics of Ollama - Use Ollama Python library",
+    "section": "Chat using the chat API endpoint",
+    "text": "Chat using the chat API endpoint\nThe ollama chat endpoint takes several parameters such as model, messages, and stream. The messages parameter is a list of dictionaries. Each dictionary contains two keys - a role and content. Message Role can be “user”, “system”,or “assistant”\nBy default, each chat generates a new response and does not preserve history.\n\nres = ollama.chat(\n    model = \"gemma3:4b\", \n    messages = [\n        {\"role\": \"user\",\"content\":\"Hello, how are you?\"}\n        ]              \n    )\n\n\nres[\"message\"][\"content\"]\n\n\"I’m doing well, thank you for asking! As a large language model, I don't really *feel* in the way humans do, but my systems are running smoothly and I’m ready to chat. 😊 \\n\\nHow are *you* doing today? Is there anything you’d like to talk about or anything I can help you with?\"\n\n\nGenerate a streaming response.\n\nres = ollama.chat(\n    model = \"gemma3:4b\", \n    messages = [\n        {\"role\": \"user\",\"content\":\"tell me about Toronto in 2 lines?\"}\n        ],\n    stream = True              \n    )\n\n\nfor chunk in res:\n    print(chunk.message.content, end = \"\", flush = True)\n\nToronto is a vibrant, multicultural metropolis – Canada's largest city – known for its diverse neighborhoods, iconic CN Tower, and thriving arts and culture scene. It’s a bustling hub of finance, innovation, and entertainment, offering something for everyone.",
+    "crumbs": [
+      "Interact with local LLMs through Ollama",
+      "Basics of Ollama - Use Ollama Python library"
+    ]
+  },
+  {
+    "objectID": "01_use_ollama_API.html",
+    "href": "01_use_ollama_API.html",
+    "title": "Basics of Ollama - Use Ollama API",
+    "section": "",
+    "text": "Before performing this step, make sure that Ollama is installed and running on your local machine.",
+    "crumbs": [
+      "Interact with local LLMs through Ollama",
+      "Basics of Ollama - Use Ollama API"
+    ]
+  },
+  {
+    "objectID": "01_use_ollama_API.html#check-the-streaming-response-from-the-model-as-a-series-of-jsons-and-print-the-response",
+    "href": "01_use_ollama_API.html#check-the-streaming-response-from-the-model-as-a-series-of-jsons-and-print-the-response",
+    "title": "Basics of Ollama - Use Ollama API",
+    "section": "Check the streaming response from the model (as a series of JSONs) and print the response",
+    "text": "Check the streaming response from the model (as a series of JSONs) and print the response\n\ndata = {\n    \"model\":\"gemma3:4b\",\n    \"prompt\": prompt,\n    \"stream\": True\n}\n\nresponse_stream = requests.post(url, json = data)\n\n\nif response_stream.status_code == 200:\n    print(\"Generated Text:\", end = \"\\n\")\n    for line in response_stream.iter_lines():\n        if line:\n            decoded_line = line.decode(\"utf-8\")\n            result = json.loads(decoded_line)\n            \n            generated_text = result.get(\"response\",\"\")\n            print(generated_text, end = \"\")\nelse:\n    print(\"Error:\", response_stream.status_code, response_stream.text)\n\nGenerated Text:\nCanada is a vast, bilingual nation known for its stunning natural beauty, including the Rocky Mountains and the Canadian Rockies. It’s a constitutional monarchy with a diverse and multicultural population.",
+    "crumbs": [
+      "Interact with local LLMs through Ollama",
+      "Basics of Ollama - Use Ollama API"
     ]
   },
   {
@@ -71,113 +180,14 @@
     ]
   },
   {
-    "objectID": "01_use_ollama_API.html",
-    "href": "01_use_ollama_API.html",
-    "title": "Basics of Ollama - Use Ollama API",
+    "objectID": "06_using_local_chat_models_in_langgraph.html",
+    "href": "06_using_local_chat_models_in_langgraph.html",
+    "title": "Using chat models and messages in Graphs - LangGraph",
     "section": "",
-    "text": "Before performing this step, make sure that Ollama is installed and running on your local machine.",
-    "crumbs": [
-      "Interact with local LLMs through Ollama",
-      "Basics of Ollama - Use Ollama API"
-    ]
-  },
-  {
-    "objectID": "01_use_ollama_API.html#check-the-streaming-response-from-the-model-as-a-series-of-jsons-and-print-the-response",
-    "href": "01_use_ollama_API.html#check-the-streaming-response-from-the-model-as-a-series-of-jsons-and-print-the-response",
-    "title": "Basics of Ollama - Use Ollama API",
-    "section": "Check the streaming response from the model (as a series of JSONs) and print the response",
-    "text": "Check the streaming response from the model (as a series of JSONs) and print the response\n\ndata = {\n    \"model\":\"gemma3:4b\",\n    \"prompt\": prompt,\n    \"stream\": True\n}\n\nresponse_stream = requests.post(url, json = data)\n\n\nif response_stream.status_code == 200:\n    print(\"Generated Text:\", end = \"\\n\")\n    for line in response_stream.iter_lines():\n        if line:\n            decoded_line = line.decode(\"utf-8\")\n            result = json.loads(decoded_line)\n            \n            generated_text = result.get(\"response\",\"\")\n            print(generated_text, end = \"\")\nelse:\n    print(\"Error:\", response_stream.status_code, response_stream.text)\n\nGenerated Text:\nCanada is a vast, bilingual nation known for its stunning natural beauty, including the Rocky Mountains and the Canadian Rockies. It’s a constitutional monarchy with a diverse and multicultural population.",
-    "crumbs": [
-      "Interact with local LLMs through Ollama",
-      "Basics of Ollama - Use Ollama API"
-    ]
-  },
-  {
-    "objectID": "02_use_ollama_python_library.html",
-    "href": "02_use_ollama_python_library.html",
-    "title": "Basics of Ollama - Use Ollama Python library",
-    "section": "",
-    "text": "import ollama\nfrom IPython.display import Markdown, display",
-    "crumbs": [
-      "Interact with local LLMs through Ollama",
-      "Basics of Ollama - Use Ollama Python library"
-    ]
-  },
-  {
-    "objectID": "02_use_ollama_python_library.html#chat-using-the-generate-api-endpoint",
-    "href": "02_use_ollama_python_library.html#chat-using-the-generate-api-endpoint",
-    "title": "Basics of Ollama - Use Ollama Python library",
-    "section": "Chat using the generate API endpoint",
-    "text": "Chat using the generate API endpoint\nGenerate the full response at once\n\nres = ollama.generate(model='gemma3:4b', prompt='Why does Canada have a king? Answer in 2 lines')\n\nLook at the answer\n\nMarkdown(res[\"response\"])\n\nCanada doesn’t actually have a king! The monarch (currently King Charles III) is Canada’s Head of State, represented by a Governor-General who acts on the monarch’s behalf.\nIt’s a historical holdover from Canada’s time as a British colony.\n\n\nGenerate a streaming response\n\nres = ollama.generate(model='gemma3:4b', prompt='Tell me about USA? Answer in 2 lines', stream = True)\n\nLook at the answer\n\nfor chunk in res:\n    print(chunk[\"response\"], end = \"\")\n\nThe United States of America is a large, diverse country known for its powerful economy, democratic government, and iconic landmarks. It’s a global leader in many fields and a melting pot of cultures and traditions.",
-    "crumbs": [
-      "Interact with local LLMs through Ollama",
-      "Basics of Ollama - Use Ollama Python library"
-    ]
-  },
-  {
-    "objectID": "02_use_ollama_python_library.html#chat-using-the-chat-api-endpoint",
-    "href": "02_use_ollama_python_library.html#chat-using-the-chat-api-endpoint",
-    "title": "Basics of Ollama - Use Ollama Python library",
-    "section": "Chat using the chat API endpoint",
-    "text": "Chat using the chat API endpoint\nThe ollama chat endpoint takes several parameters such as model, messages, and stream. The messages parameter is a list of dictionaries. Each dictionary contains two keys - a role and content. Message Role can be “user”, “system”,or “assistant”\nBy default, each chat generates a new response and does not preserve history.\n\nres = ollama.chat(\n    model = \"gemma3:4b\", \n    messages = [\n        {\"role\": \"user\",\"content\":\"Hello, how are you?\"}\n        ]              \n    )\n\n\nres[\"message\"][\"content\"]\n\n\"I’m doing well, thank you for asking! As a large language model, I don't really *feel* in the way humans do, but my systems are running smoothly and I’m ready to chat. 😊 \\n\\nHow are *you* doing today? Is there anything you’d like to talk about or anything I can help you with?\"\n\n\nGenerate a streaming response.\n\nres = ollama.chat(\n    model = \"gemma3:4b\", \n    messages = [\n        {\"role\": \"user\",\"content\":\"tell me about Toronto in 2 lines?\"}\n        ],\n    stream = True              \n    )\n\n\nfor chunk in res:\n    print(chunk.message.content, end = \"\", flush = True)\n\nToronto is a vibrant, multicultural metropolis – Canada's largest city – known for its diverse neighborhoods, iconic CN Tower, and thriving arts and culture scene. It’s a bustling hub of finance, innovation, and entertainment, offering something for everyone.",
-    "crumbs": [
-      "Interact with local LLMs through Ollama",
-      "Basics of Ollama - Use Ollama Python library"
-    ]
-  },
-  {
-    "objectID": "05_graph_basics_langgraph.html",
-    "href": "05_graph_basics_langgraph.html",
-    "title": "Graph basics in LangGraph",
-    "section": "",
-    "text": "Nodes (Agent and Tools)\nEdges (Simple, conditional)\n\n\n\nThe first thing you do when you define a graph is to define a State. State is the object that we pass between the nodes and edges of our graph. The state schema serves as the input schema for all Nodes and Edges in the graph.\n\nfrom typing import TypedDict\n\n# Define that state should be a dictionary with a single key - graph_state with values of type string\nclass State(TypedDict):\n    graph_state: str\n\n\n\n\n\n\n\nNote\n\n\n\nTypedDict does not do checking of input during run. We need to do checking separately. If we want to do dynamic checking while running a cell, we need to use BaseModel from pydantic.\n\n\n\n\n\n\nNodes are just python functions\nThe first positional argument is the state.\nEach node operates on the state.\nBy default, each node also overrides the previous state value.\n\n\ndef node_1(state):\n    print(\"---Node 1---\")\n    return {\"graph_state\": state[\"graph_state\"]+\"I am\"}\n\ndef node_2(state):\n    print(\"---Node 2---\")\n    return {\"graph_state\": state[\"graph_state\"]+\" happy!\"}\n\ndef node_3(state):\n    print(\"---Node 3---\")\n    return {\"graph_state\": state[\"graph_state\"]+\" sad!\"}\n\n\n\n\nEdges connect the nodes.\n\nNormal edges are used if you want to go from one node to the next.\nConditional edges are used when you want to optionally route between nodes.\nConditional edge is implemented as a function that returns the next node to visit based on some logic.\n\n\nimport random\nfrom typing import Literal # Literal is used for restricting a value to a fixed set of constants\n\ndef decide_mood(state) -&gt; Literal[\"node_2\", \"node_3\"]:\n\n    # Often, we will use state to decide on the next node to visit\n    # We are not doing anything with the current state right now.\n    user_input = state[\"graph_state\"]\n\n    # Here, we are just doing a 50/50 split\n    if random.random()&lt;0.5:\n        return \"node_2\"\n    \n    return \"node_3\"\n\n\n\n\n\nNow we will build a graph from our components - nodes and edges.\nThe StateGraph class is the one we will use.\nFirst we initialize a StateGraph with the State class we had defined.\nThen, we will add our nodes and edges.\nWe use the START node, a special node that sends user input to the graph, to indicate where to start our graph.\nWe use END node, which is a special node, to indicate end of the graph.\nWe will compile our graph to check the structure of our graph.\nWe will then visualize the graph.\n\n\nfrom IPython.display import Image, display\nfrom langgraph.graph import StateGraph, START, END\n\n# Build graph\nbuilder = StateGraph(State)\nbuilder.add_node(\"node_1\", node_1)\nbuilder.add_node(\"node_2\", node_2)\nbuilder.add_node(\"node_3\", node_3)\n\nbuilder.add_edge(START, \"node_1\")\nbuilder.add_conditional_edges(\"node_1\", decide_mood)\nbuilder.add_edge(\"node_2\", END)\nbuilder.add_edge(\"node_3\", END)\n\n# Compile the graph\ngraph = builder.compile()\n\n# View the graph\ndisplay(Image(graph.get_graph().draw_mermaid_png()))",
+    "text": "Goals\n\nWe will use chat messages in our graph\nWe will use chat models in our graph\n\n\n\nMessages\nChat models can use messages, which capture different roles within a conversation.\nLangChain supports various message types, including HumanMessage , AIMessage, SystemMessage, and ToolMessage.\nThese represent messages from the user, from the chat model, for the chat model to instruct behaviour, and from a tool call.\nEach message can be supplied with the following:\n\ncontent - content of the message\nname - optional, who is creating the message\nresponse_metadata - optional, a dictionary of metadata that is often specific to each model provider\n\n\nfrom pprint import pprint\nfrom langchain_core.messages import AIMessage, HumanMessage, SystemMessage\n\nmessages = [AIMessage(content = f\"So you said you were researching ocean mammals?\", name = \"Model\")]\nmessages.extend([HumanMessage(content=f\"Yes, that's right.\", name = \"Lance\")])\nmessages.extend([AIMessage(content = f\"Great, what would you like to learn about?\", name = \"Model\")])\nmessages.extend([HumanMessage(content = f\"I want to learn about the best place to see Orcas in the US. Keep your answer to one paragraph.\", name = \"Lance\")])\n\nfor m in messages:\n    m.pretty_print()\n\n================================== Ai Message ==================================\nName: Model\n\nSo you said you were researching ocean mammals?\n================================ Human Message =================================\nName: Lance\n\nYes, that's right.\n================================== Ai Message ==================================\nName: Model\n\nGreat, what would you like to learn about?\n================================ Human Message =================================\nName: Lance\n\nI want to learn about the best place to see Orcas in the US. Keep your answer to one paragraph.\n\n\n\n\nChat Models\nChat Models can use a sequence of messages as input and support message roles as discussed below. We will use a local model from Ollama\n\nfrom langchain_ollama import ChatOllama\n\ngemma3 = ChatOllama(model = \"gemma3:4b\", temperature = 0)\nresult = gemma3.invoke(messages)\ntype(result)\n\nlangchain_core.messages.ai.AIMessage\n\n\n\nprint(result)\nprint(result.response_metadata)\n\ncontent='For the best chance to see Orcas in the US, the San Juan Islands of Washington State are widely considered the premier location. These islands, part of the Salish Sea, are home to a large resident pod of orcas that primarily feed on salmon. However, you can also spot Transient (Bigg’s) orcas, which hunt marine mammals like seals and sea lions. The summer months (June-September) offer the highest probability of seeing resident orcas, while winter months offer a chance to witness the more elusive Transient orcas. Whale watching tours operate daily from towns like Friday Harbor and Anacortes, offering expert guides and increased chances of a sighting.' additional_kwargs={} response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:15.261786Z', 'done': True, 'done_reason': 'stop', 'total_duration': 15642801375, 'load_duration': 109076167, 'prompt_eval_count': 73, 'prompt_eval_duration': 1926795958, 'eval_count': 136, 'eval_duration': 13603448792, 'model_name': 'gemma3:4b'} id='run-9b665ac1-cd2b-4060-9866-057814d6ba8d-0' usage_metadata={'input_tokens': 73, 'output_tokens': 136, 'total_tokens': 209}\n{'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:15.261786Z', 'done': True, 'done_reason': 'stop', 'total_duration': 15642801375, 'load_duration': 109076167, 'prompt_eval_count': 73, 'prompt_eval_duration': 1926795958, 'eval_count': 136, 'eval_duration': 13603448792, 'model_name': 'gemma3:4b'}\n\n\n\n\nUsing messages as graph state\nWith the above foundations in place, we can now use messages in our graph state.\n\nLet’s define our state MessageState.\nIt’s defined as a TypedDict with a single key:messages\nmessages is simply a list of type AnyMessage, meaning it’s a list of messages.\n\n\nfrom typing import TypedDict\nfrom langchain_core.messages import AnyMessage\n\nclass MessageState(TypedDict):\n    messages: list[AnyMessage]\n\n\n\nReducers\nReducers are functions that allow us to specify how to handle state updates as we move through a graph.\nNow, as the graph runs, we do not want to overwrite messages, rather append our messages to our messages state key. The above problem motivates the idea of a reducer function.\n\nReducer functions allow us to specify how state updates are performed.\nif no reducer function is explicitly specified, then it is assumed that all updates to that key should override it.\nSince we want to append messages, we can use a pre-built add_messages reducer!\nThe above ensures that state updates we send to our graph are appended to the existing list of messages.\nWe annotate our key with a reducer function as metadata using Annotated from typing.\n\n\nfrom typing import Annotated\nfrom langchain_core.messages import AnyMessage\nfrom langgraph.graph.message import add_messages\n\nclass MessageState(TypedDict):\n    messages: Annotated[list[AnyMessage], add_messages]\n\nSince the above operation is so common, langgraph provides a pre-built MessagesState This state has the following: - A pre-built single messages key - which is a list of AnyMessage objects that uses the add_messages reducer.\n\nfrom langgraph.graph import MessagesState\n\nclass State(MessagesState):\n    # Add any other keys you need besides messages, which is pre-built\n    pass\n\nThe classes State and MessageState work equivalently.\nLet’s look at how add_messages function works in isolation.\n\ninitial_messages = [AIMessage(content = \"hello, how can I assist you?\"),\nHumanMessage(content = \"I'm looking for information on marine biology\")]\n\n# new message to add\nnew_message = AIMessage(content = \"Sure, I can help with that. What specifically are you interested in?\")\n\n#\nadd_messages(initial_messages, new_message)\n\n[AIMessage(content='hello, how can I assist you?', additional_kwargs={}, response_metadata={}, id='aafeff24-efa6-48a6-a72f-92d19baacf41'),\n HumanMessage(content=\"I'm looking for information on marine biology\", additional_kwargs={}, response_metadata={}, id='d7448e16-3f60-4a01-9e5b-f33411345148'),\n AIMessage(content='Sure, I can help with that. What specifically are you interested in?', additional_kwargs={}, response_metadata={}, id='2757efea-ee44-46f4-900e-2d0f680693fa')]\n\n\n\n\nMake a graph\n\nfrom IPython.display import Image, display\nfrom langgraph.graph import StateGraph, START, END\n\n# Define a state class\nclass State(MessagesState):\n    # Add any additional keys apart from messages\n    pass\n\n# Define a node\ndef calling_an_llm(state: State):\n    return {\"messages\": [gemma3.invoke(state[\"messages\"])]}\n\n# Build graph\nbuilder = StateGraph(State)\nbuilder.add_node(\"llm_call\", calling_an_llm)\nbuilder.add_edge(START, \"llm_call\")\nbuilder.add_edge(\"llm_call\", END)\ngraph = builder.compile()\n\n# View the graph\ndisplay(Image(graph.get_graph().draw_mermaid_png()))\n\n\n\n\n\n\n\n\n\n\nRun the graph\n\nresult = graph.invoke({\"messages\": HumanMessage(content = \"hello, how are you today\")})\nresult\n\n{'messages': [HumanMessage(content='hello, how are you today', additional_kwargs={}, response_metadata={}, id='8cac55d8-4004-4383-b4df-12fc4384efaa'),\n  AIMessage(content='I’m doing great, thanks for asking! As a large language model, I don’t really *feel* in the way humans do, but my systems are running smoothly and I’m ready to chat. 😊 \\n\\nHow about you? How is *your* day going so far? \\n\\nDo you want to talk about something specific, or just have a general conversation?', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:23.517882Z', 'done': True, 'done_reason': 'stop', 'total_duration': 8060671291, 'load_duration': 63764250, 'prompt_eval_count': 15, 'prompt_eval_duration': 233351084, 'eval_count': 80, 'eval_duration': 7762857791, 'model_name': 'gemma3:4b'}, id='run-ea93a7c2-2ecf-4f0e-b995-890a570137b8-0', usage_metadata={'input_tokens': 15, 'output_tokens': 80, 'total_tokens': 95})]}\n\n\n\nresult = graph.invoke({\"messages\": HumanMessage(content = \"tell me about marine biology in 2 sentences.\")})\nprint(result)\n\n{'messages': [HumanMessage(content='tell me about marine biology in 2 sentences.', additional_kwargs={}, response_metadata={}, id='7c62138b-ed49-4415-a47a-b494d14e446e'), AIMessage(content='Marine biology is the scientific study of life in the ocean, encompassing everything from microscopic plankton to massive whales and the complex ecosystems they inhabit. It explores the diverse adaptations, behaviors, and interactions of marine organisms and their environment, crucial for understanding and protecting our oceans.', additional_kwargs={}, response_metadata={'model': 'gemma3:4b', 'created_at': '2025-06-03T23:08:29.020415Z', 'done': True, 'done_reason': 'stop', 'total_duration': 5486549750, 'load_duration': 57485916, 'prompt_eval_count': 19, 'prompt_eval_duration': 293024833, 'eval_count': 54, 'eval_duration': 5135490167, 'model_name': 'gemma3:4b'}, id='run-f144c8cb-173e-412a-a99b-f1930eb02664-0', usage_metadata={'input_tokens': 19, 'output_tokens': 54, 'total_tokens': 73})]}\n\n\n\nresult[\"messages\"][-1].content\n\n'Marine biology is the scientific study of life in the ocean, encompassing everything from microscopic plankton to massive whales and the complex ecosystems they inhabit. It explores the diverse adaptations, behaviors, and interactions of marine organisms and their environment, crucial for understanding and protecting our oceans.'",
     "crumbs": [
       "LangGraph for building AI agents",
-      "LangGraph Basics"
-    ]
-  },
-  {
-    "objectID": "05_graph_basics_langgraph.html#define-state",
-    "href": "05_graph_basics_langgraph.html#define-state",
-    "title": "Graph basics in LangGraph",
-    "section": "",
-    "text": "The first thing you do when you define a graph is to define a State. State is the object that we pass between the nodes and edges of our graph. The state schema serves as the input schema for all Nodes and Edges in the graph.\n\nfrom typing import TypedDict\n\n# Define that state should be a dictionary with a single key - graph_state with values of type string\nclass State(TypedDict):\n    graph_state: str\n\n\n\n\n\n\n\nNote\n\n\n\nTypedDict does not do checking of input during run. We need to do checking separately. If we want to do dynamic checking while running a cell, we need to use BaseModel from pydantic.",
-    "crumbs": [
-      "LangGraph for building AI agents",
-      "LangGraph Basics"
-    ]
-  },
-  {
-    "objectID": "05_graph_basics_langgraph.html#define-nodes",
-    "href": "05_graph_basics_langgraph.html#define-nodes",
-    "title": "Graph basics in LangGraph",
-    "section": "",
-    "text": "Nodes are just python functions\nThe first positional argument is the state.\nEach node operates on the state.\nBy default, each node also overrides the previous state value.\n\n\ndef node_1(state):\n    print(\"---Node 1---\")\n    return {\"graph_state\": state[\"graph_state\"]+\"I am\"}\n\ndef node_2(state):\n    print(\"---Node 2---\")\n    return {\"graph_state\": state[\"graph_state\"]+\" happy!\"}\n\ndef node_3(state):\n    print(\"---Node 3---\")\n    return {\"graph_state\": state[\"graph_state\"]+\" sad!\"}",
-    "crumbs": [
-      "LangGraph for building AI agents",
-      "LangGraph Basics"
-    ]
-  },
-  {
-    "objectID": "05_graph_basics_langgraph.html#define-edges",
-    "href": "05_graph_basics_langgraph.html#define-edges",
-    "title": "Graph basics in LangGraph",
-    "section": "",
-    "text": "Edges connect the nodes.\n\nNormal edges are used if you want to go from one node to the next.\nConditional edges are used when you want to optionally route between nodes.\nConditional edge is implemented as a function that returns the next node to visit based on some logic.\n\n\nimport random\nfrom typing import Literal # Literal is used for restricting a value to a fixed set of constants\n\ndef decide_mood(state) -&gt; Literal[\"node_2\", \"node_3\"]:\n\n    # Often, we will use state to decide on the next node to visit\n    # We are not doing anything with the current state right now.\n    user_input = state[\"graph_state\"]\n\n    # Here, we are just doing a 50/50 split\n    if random.random()&lt;0.5:\n        return \"node_2\"\n    \n    return \"node_3\"",
-    "crumbs": [
-      "LangGraph for building AI agents",
-      "LangGraph Basics"
-    ]
-  },
-  {
-    "objectID": "05_graph_basics_langgraph.html#construct-the-graph",
-    "href": "05_graph_basics_langgraph.html#construct-the-graph",
-    "title": "Graph basics in LangGraph",
-    "section": "",
-    "text": "Now we will build a graph from our components - nodes and edges.\nThe StateGraph class is the one we will use.\nFirst we initialize a StateGraph with the State class we had defined.\nThen, we will add our nodes and edges.\nWe use the START node, a special node that sends user input to the graph, to indicate where to start our graph.\nWe use END node, which is a special node, to indicate end of the graph.\nWe will compile our graph to check the structure of our graph.\nWe will then visualize the graph.\n\n\nfrom IPython.display import Image, display\nfrom langgraph.graph import StateGraph, START, END\n\n# Build graph\nbuilder = StateGraph(State)\nbuilder.add_node(\"node_1\", node_1)\nbuilder.add_node(\"node_2\", node_2)\nbuilder.add_node(\"node_3\", node_3)\n\nbuilder.add_edge(START, \"node_1\")\nbuilder.add_conditional_edges(\"node_1\", decide_mood)\nbuilder.add_edge(\"node_2\", END)\nbuilder.add_edge(\"node_3\", END)\n\n# Compile the graph\ngraph = builder.compile()\n\n# View the graph\ndisplay(Image(graph.get_graph().draw_mermaid_png()))",
-    "crumbs": [
-      "LangGraph for building AI agents",
-      "LangGraph Basics"
+      "Using local chat models in LangGraph"
     ]
   }
 ]
