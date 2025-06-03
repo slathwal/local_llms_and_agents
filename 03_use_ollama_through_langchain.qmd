@@ -134,3 +134,19 @@ Response is printed as it is being generated.
 for chunk in gemma3.stream("Tell me about Canada in 4 sentences."):
     print(chunk.content, end="")
 ```
+
+# Use community tools available in LangChain
+As an example, we are going to look at a tool to get search results from the web. Note, just using the tool does not require calling an LLM. Tools are independent and can be used with an LLM, but also independently.
+
+```{python}
+from langchain_community.tools import DuckDuckGoSearchRun, DuckDuckGoSearchResults
+from langchain_community.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
+
+search = DuckDuckGoSearchResults()
+search.invoke("What's the latest news about US?")
+```
+
+```{python}
+search = DuckDuckGoSearchRun()
+search.invoke("What's the latest news about US?")
+```

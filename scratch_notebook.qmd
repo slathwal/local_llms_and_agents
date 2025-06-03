@@ -1,0 +1,14 @@
+---
+title: Rough notebook
+---
+
+# Different types of messages classes in LangCha
+
+TO DO - Human Message - System Message - AI Message - Tool Message - Any other?
+
+## Parse the output of a model with LangChain
+- Move this section to another notebook.
+Let's have the LLM output a JSON and parse the output. We use templates to define formatting instructions and pass them to a model.
+From 11 mins in Video 1 of deeplearning.AI
+
+The deeplearning.AI langchain basics course is from May 2023 and is very old. The concept of chains and output parsers shown there has changed significantly. I think my time is much better spent on langGraph than learning about memory and chains in LangChain.
