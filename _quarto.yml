@@ -2,6 +2,10 @@ project:
   type: website
   output-dir: docs
   execute-dir: project
+  render:
+    - "*.qmd"
+    - "!scratch_notebook.qmd"
+    - "!04_interact_with_csv_using_ollama.qmd"
 
 website:
   sidebar:
@@ -14,11 +18,11 @@ website:
           - 02_use_ollama_python_library.qmd
       - text: "Interact with local LLMs using langchain"
         href: 03_use_ollama_through_langchain.qmd
-      - text: "Interact with a CSV file in natural language using local LLMs"
-        href: 04_interact_with_csv_using_ollama.qmd
       - section: LangGraph for building AI agents
         contents:
           - text: "LangGraph Basics"
             href: 05_graph_basics_langgraph.qmd
           - text: "Using local chat models in LangGraph"
             href: 06_using_local_chat_models_in_langgraph.qmd
+
+

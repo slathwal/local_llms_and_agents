@@ -4,7 +4,7 @@ title: Rough notebook
 
 # Different types of messages classes in LangCha
 
-TO DO - Human Message - System Message - AI Message - Tool Message - Any other?
+TO DO - Human Message - System Message - AI Message - Tool Message - addressed in LangGraph notebooks.
 
 ## Parse the output of a model with LangChain
 - Move this section to another notebook.
